@@ -1,24 +1,24 @@
-### UFC
-## Descripción
+## UFC
+### Descripción
 Prototipo robótico orientado a velocidad y potencia.
 
-## Objetivo
+### Objetivo
 Lograr un vehículo capaz de avanzar, girar y responder a comandos.
 
-## Integrantes
+### Integrantes
 - Ulises
 - Fabricio
 - Clovis
 
-## Roles
+### Roles
 - Scrum Master: Ulises
 - Product Owner: Fabricio
 - Dev: Clovis
 
-## Tecnologías
+### Tecnologías
 - Arduino
 - Motores DC
 - Puente H
 
-## Estado
+### Estado
 En desarrollo
