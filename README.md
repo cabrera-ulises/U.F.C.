@@ -1,3 +1,24 @@
-# U.F.C.
-Escudería - Proyecto Informático 1
-Integrantes: Cabrera Ulises, Clemencot Clovis, Crespo Fabricio
+UFC
+## Descripción
+Prototipo robótico orientado a velocidad y potencia.
+
+## Objetivo
+Lograr un vehículo capaz de avanzar, girar y responder a comandos.
+
+## Integrantes
+- Ulises
+- Fabricio
+- Clovis
+
+## Roles
+- Scrum Master: Ulises
+- Product Owner: Fabricio
+- Dev: Clovis
+
+## Tecnologías
+- Arduino
+- Motores DC
+- Puente H
+
+## Estado
+En desarrollo
