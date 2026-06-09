@@ -1,0 +1,24 @@
+# ── Arduino IDE — archivos de compilación local ──────────────────────
+.build/
+build/
+*.hex
+*.elf
+*.bin
+*.map
+*.d
+*.o
+
+# ── IDEs y editores ──────────────────────────────────────────────────
+.vscode/
+.idea/
+*.code-workspace
+
+# ── Sistema operativo ────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Archivos temporales ──────────────────────────────────────────────
+*.tmp
+*.log
+*.bak
