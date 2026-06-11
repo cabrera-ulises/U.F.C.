@@ -62,4 +62,4 @@ cd U.F.C.
 ## Licencia
 
 © 2026 Escudería U.F.C. — Ulises Cabrera, Fabricio Crespo, Clovis Clemencot.
-Todos los derechos reservados. Ver `LICENCIA.md` para condiciones de uso y distribución.
+Todos los derechos reservados. Ver [LICENCIA.md](LICENCIA.md) para condiciones de uso y distribución.
