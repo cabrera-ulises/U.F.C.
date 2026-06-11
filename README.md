@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="logo_ufc.png" width="180" alt="Logo U.F.C.">
+</p>
+
 # 🏎️ Escudería U.F.C. — Vehículo Dagestan
 
 > Proyecto Informático 1 | Prof. Cynthia Berea | 2026
