@@ -43,9 +43,9 @@ Prototipo robótico de tracción integral 4WD controlado de forma inalámbrica m
 ## Cómo clonar y compilar
 
 ```bash
-# 1. Clonar el repositorio
-git clone https://github.com/cabrera-ulises/U.F.C.git
-cd U.F.C.
+# 1. Clonar el repositorio (Se usa "U.F.C-Proyecto" al final para evitar errores de puntos en Windows)
+git clone https://github.com/cabrera-ulises/U.F.C..git U.F.C-Proyecto
+cd U.F.C-Proyecto
 
 # 2. Abrir en Arduino IDE
 # Archivo: firmware/dagestan_FINAL.ino
