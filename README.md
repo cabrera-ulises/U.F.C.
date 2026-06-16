@@ -1,5 +1,6 @@
 <p align="center">
-  <img src="logo_ufc.png" width="180" alt="Logo U.F.C.">
+  <img src="logo_ufc.png" width="180" alt="Logo U.F.C.">&nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="logo_dagestan.png" width="180" alt="Logo Dagestan">
 </p>
 
 # 🏎️ Escudería U.F.C. — Vehículo Dagestan
