@@ -1,112 +1,138 @@
 /*
  * ════════════════════════════════════════════════════════════════════
  * ESCUDERÍA U.F.C. — Vehículo: Dagestan
- * Proyecto Informático 1 | Prof. Cynthia Berea | 2026
+ * Proyecto Informático 1 | Prof. Cyntyha Berea | 2026
  * Ingenieros: Ulises Cabrera, Fabricio Crespo, Clovis Clemencot
  * ────────────────────────────────────────────────────────────────────
  * Hardware:
  * - Arduino UNO R3 (ATmega328P, 16 MHz, 5V TTL)
  * - Motor Shield L293D (4 puentes H independientes)
- * - Módulo Bluetooth HC-06 (UART, modo Esclavo, 9600 bps)
- * - 4x Motores DC reductores amarillos (3–6V, 200 mA típico)
- * - Portapilas 4xAA (6V, fuente independiente de motores)
+ * - Módulo Bluetooth HC-06 (SoftwareSerial en pines RX=9, TX=10, 9600 bps)
+ * - 4x Motores DC reductores amarillos (3–6V)
+ * - Alimentación principal: Pila 9V (según especificaciones técnicas)
  * ────────────────────────────────────────────────────────────────────
  * Comandos Bluetooth (carácter ASCII):
  * F → Avanzar      B → Retroceder
  * L → Girar izq.   R → Girar der.
- * S → Detener
  * ────────────────────────────────────────────────────────────────────
- * Actualización de Cátedra:
+ * Actualización / Lógica de Control:
  * - Se implementa la estructura switch/case para optimizar la
  * lógica de control y despacho de comandos serie.
- * - Se mantiene la búsqueda e indexación manual en el buffer
- * sin librerías automatizadas para control estricto de memoria.
+ * - Uso de la librería SoftwareSerial para evitar conflictos con el
+ * puerto serie de hardware nativo del Arduino (TX/RX 0 y 1).
+ * - La velocidad PWM (255) y el estado (RELEASE/0) se asignan de 
+ * forma dinámica dentro de cada función cinemática.
  * ════════════════════════════════════════════════════════════════════
  */
 
-// ── Librería del Motor Shield L293D ──────────────────────────────────
+// ── Librerías del sistema ────────────────────────────────────────────
 #include <AFMotor.h>
+#include <SoftwareSerial.h>
 
-// Definición de los 4 canales de asignación de motores independientes
-AF_DCMotor motorDelanteroDerecho(1);
-AF_DCMotor motorDelanteroIzquierdo(2);
-AF_DCMotor motorTraseroDerecho(3);
-AF_DCMotor motorTraseroIzquierdo(4);
+// ── Configuración del Módulo Bluetooth ───────────────────────────────
+SoftwareSerial bluetoothSerial(9, 10); // RX, TX
 
-// Parámetros de configuración del sistema
-const int VELOCIDAD_CONSIGNA = 200; // Valor PWM de velocidad (0 a 255)
-char bufferSerial[10];              // Array estático para almacenar datos serie
-int indiceBuf = 0;                  // Puntero de índice para el buffer
+// ── Configuración del Motor Shield L293D ─────────────────────────────
+// Pines iniciales de los motores y frecuencia PWM
+AF_DCMotor motor1(1, MOTOR12_1KHZ);
+AF_DCMotor motor2(2, MOTOR12_1KHZ);
+AF_DCMotor motor3(3, MOTOR34_1KHZ);
+AF_DCMotor motor4(4, MOTOR34_1KHZ);
 
-// Declaración de prototipos de funciones cinemáticas
-void avanzar();
-void retroceder();
-void girarIzquierda();
-void girarDerecha();
-void detener();
-void procesarComando(char comando);
+// Variable global para almacenar el comando recibido
+char Variable;
 
-void setup() {
-  // Inicialización del puerto serie para el módulo HC-06 a 9600 baudios
-  Serial.begin(9600);
-  
-  // Establecer la velocidad nominal en los cuatro controladores de potencia
-  motorDelanteroDerecho.setSpeed(VELOCIDAD_CONSIGNA);
-  motorDelanteroIzquierdo.setSpeed(VELOCIDAD_CONSIGNA);
-  motorTraseroDerecho.setSpeed(VELOCIDAD_CONSIGNA);
-  motorTraseroIzquierdo.setSpeed(VELOCIDAD_CONSIGNA);
-  
-  // Inicializar el vehículo en estado pasivo/frenado por seguridad
-  detener();
+void setup()
+{
+  bluetoothSerial.begin(9600);  // Establecemos los baudios para el módulo bluetooth.
 }
 
 void loop() {
-  // Bucle indexado manual para la escucha y llenado del buffer ASCII
-  while (Serial.available() > 0) {
-    char byteRecibido = Serial.read();
+  // Verificamos si hay datos disponibles en el puerto serial virtual
+  if (bluetoothSerial.available() > 0) {
+    Variable = bluetoothSerial.read(); // Leemos el byte entrante
+
+    Stop(); // Inicializo con motores detenidos por seguridad antes del cambio de estado
     
-    // Detección de caracteres de fin de línea / retorno de carro
-    if (byteRecibido == '\n' || byteRecibido == '\r') {
-      if (indiceBuf > 0) {
-        bufferSerial[indiceBuf] = '\0'; // Terminación segura de la cadena
-        
-        // Despacho del carácter de control alojado en la primera posición
-        procesarComando(bufferSerial[0]);
-        
-        // CONTROL DE CALIDAD: Limpieza explícita de memoria residual
-        bufferSerial[0] = '\0'; 
-        indiceBuf = 0; // Reinicio del puntero de asignación
-      }
-    } else {
-      // Prevención de desborde de memoria (Buffer Overflow)
-      if (indiceBuf < 9) {
-        bufferSerial[indiceBuf] = byteRecibido;
-        indiceBuf++;
-      }
+    // Despacho del carácter de control
+    switch (Variable) {
+      case 'F':
+        adelante();
+        break;
+      case 'B':
+        atras();
+        break;
+      case 'L':
+        izquierda();
+        break;
+      case 'R':
+        derecha();
+        break;
     }
   }
 }
 
-/*
- * ════════════════════════════════════════════════════════════════════
- * procesarComando(char comando)
- * OPTIMIZACIÓN DE HARDWARE/SOFTWARE: Despacho modular mediante switch
- * reemplazando las ramificaciones condicionales anidadas previas.
- * ════════════════════════════════════════════════════════════════════
- */
-void procesarComando(char comando) {
-  switch (comando) {
-    case 'F':
-      avanzar();
-      break;
-    case 'B':
-      retroceder();
-      break;
-    case 'L':
-      girarIzquierda();
-      break;
-    case 'R':
-      girarDerecha();
+// ── IMPLEMENTACIÓN DE FUNCIONES DE CONTROL CINEMÁTICO MÓVIL ──────────
+
+void adelante()
+{
+  motor1.setSpeed(255); // Asigno maxima velocidad al motor 1
+  motor1.run(FORWARD);  // Hago girar el motor 1 hacia delante
+  motor2.setSpeed(255); // Asigno maxima velocidad al motor 2
+  motor2.run(FORWARD);  // Hago girar el motor 2 hacia delante
+  motor3.setSpeed(255); // Asigno maxima velocidad al motor 3
+  motor3.run(FORWARD);  // Hago girar el motor 3 hacia delante
+  motor4.setSpeed(255); // Asigno maxima velocidad al motor 4
+  motor4.run(FORWARD);  // Hago girar el motor 4 hacia delante
+}
+
+void atras()
+{
+  motor1.setSpeed(255); // Asigno maxima velocidad al motor 1
+  motor1.run(BACKWARD); // Hago girar el motor 1 hacia atras
+  motor2.setSpeed(255); // Asigno maxima velocidad al motor 2
+  motor2.run(BACKWARD); // Hago girar el motor 2 hacia atras
+  motor3.setSpeed(255); // Asigno maxima velocidad al motor 3
+  motor3.run(BACKWARD); // Hago girar el motor 3 hacia atras
+  motor4.setSpeed(255); // Asigno maxima velocidad al motor 4
+  motor4.run(BACKWARD); // Hago girar el motor 4 hacia atras
+}
+
+void izquierda()
+{
+  motor1.setSpeed(255); // Asigno maxima velocidad al motor 1
+  motor1.run(FORWARD);  // Hago girar el motor 1 hacia delante
+  motor2.setSpeed(255); // Asigno maxima velocidad al motor 2
+  motor2.run(BACKWARD); // Hago girar el motor 2 hacia atras
+  motor3.setSpeed(255); // Asigno maxima velocidad al motor 3
+  motor3.run(BACKWARD); // Hago girar el motor 3 hacia atras
+  motor4.setSpeed(255); // Asigno maxima velocidad al motor 4
+  motor4.run(FORWARD);  // Hago girar el motor 4 hacia delante
+}
+
+void derecha()
+{
+  motor1.setSpeed(255); // Asigno maxima velocidad al motor 1
+  motor1.run(BACKWARD); // Hago girar el motor 1 hacia atras
+  motor2.setSpeed(255); // Asigno maxima velocidad al motor 2
+  motor2.run(FORWARD);  // Hago girar el motor 2 hacia delante
+  motor3.setSpeed(255); // Asigno maxima velocidad al motor 3
+  motor3.run(FORWARD);  // Hago girar el motor 3 hacia delante
+  motor4.setSpeed(255); // Asigno maxima velocidad al motor 4
+  motor4.run(BACKWARD); // Hago girar el motor 4 hacia atras
+}
+
+void Stop()
+{
+  motor1.setSpeed(0);  // Asigno minima velocidad al motor 1
+  motor1.run(RELEASE); // Paro el motor 1 cuando dejo de pulsar el boton
+  motor2.setSpeed(0);  // Asigno minima velocidad al motor 2
+  motor2.run(RELEASE); // Paro el motor 2 cuando dejo de pulsar el boton
+  motor3.setSpeed(0);  // Asigno minima velocidad al motor 3
+  motor3.run(RELEASE); // Paro el motor 3 cuando dejo de pulsar el boton
+  motor4.setSpeed(0);  // Asigno minima velocidad al motor 4
+  motor4.run(RELEASE); // Paro el motor 4 cuando dejo de pulsar el boton
+}
       break;
     case 'S':
       detener();
